@@ -1,5 +1,5 @@
-#include "MainWindow.h"
-#include "Process.h"
+#include "../header/MainWindow.h"
+#include "../header/Process.h"
 #include <QPainter>
 #include <iostream>
 #include <QMouseEvent>
