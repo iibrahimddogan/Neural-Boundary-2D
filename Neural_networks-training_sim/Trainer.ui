@@ -84,7 +84,7 @@
      <number>1</number>
     </property>
     <property name="maximum">
-     <number>9</number>
+     <number>2</number>
     </property>
     <property name="value">
      <number>1</number>
@@ -124,6 +124,24 @@
     </property>
     <property name="text">
      <string>Load Data</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="TrainButton">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>370</y>
+      <width>150</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Train</string>
     </property>
    </widget>
   </widget>

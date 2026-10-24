@@ -5,6 +5,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include "ui_Trainer.h"
 
+class QGraphicsPixmapItem;
+
 class PlaneScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -29,6 +31,7 @@ private slots:
     void onPointClicked(double x, double y);
     void save_data();
     void load_data();
+    void train_network();
 
 private:
     Ui::TrainerClass ui;
@@ -38,6 +41,8 @@ private:
     int* classes = nullptr;
     int point_count = 0;
     int capacity = 0;
+
+    QGraphicsPixmapItem* decisionMap = nullptr;
 
     void addPoint(double x, double y, int cls);
 };
