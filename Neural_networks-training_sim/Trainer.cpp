@@ -43,37 +43,54 @@ Trainer::Trainer(QWidget* parent) : QMainWindow(parent)
 Trainer::~Trainer()
 {
     delete[] points;
+    delete[] classes;
 }
 
 void Trainer::onPointClicked(double x, double y)
 {
-    addPoint(x, y);
+    static const QColor renkler[] = {
+        Qt::red, Qt::blue, Qt::darkGreen, QColor(255, 140, 0), Qt::darkMagenta,
+        QColor(0, 160, 160), Qt::darkYellow, QColor(150, 75, 0), Qt::black
+    };
 
-    scene->addEllipse(x - 4, -y - 4, 8, 8, QPen(Qt::black), QBrush(Qt::red));
+    int cls = ui.Spinbox_Class->value() - 1;
+    addPoint(x, y, cls);
 
-    statusBar()->showMessage(QString("x = %1   y = %2   nokta sayisi: %3")
+    QColor c = renkler[cls];
+    scene->addEllipse(x - 4, -y - 4, 8, 8, QPen(c), QBrush(c));
+
+    statusBar()->showMessage(QString("x = %1   y = %2   sinif: %3   nokta sayisi: %4")
         .arg(x, 0, 'f', 1)
         .arg(y, 0, 'f', 1)
+        .arg(cls + 1)
         .arg(point_count));
 }
 
-void Trainer::addPoint(double x, double y)
+void Trainer::addPoint(double x, double y, int cls)
 {
     if (point_count == capacity)
     {
         int new_capacity = (capacity == 0) ? 8 : capacity * 2;
 
         double* new_points = new double[new_capacity * 2];
+        int* new_classes = new int[new_capacity];
 
         for (int i = 0; i < point_count * 2; i++)
             new_points[i] = points[i];
 
+        for (int i = 0; i < point_count; i++)
+            new_classes[i] = classes[i];
+
         delete[] points;
+        delete[] classes;
+
         points = new_points;
+        classes = new_classes;
         capacity = new_capacity;
     }
 
     points[2 * point_count] = x;
     points[2 * point_count + 1] = y;
+    classes[point_count] = cls;
     point_count++;
 }

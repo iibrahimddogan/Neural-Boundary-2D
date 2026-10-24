@@ -33,8 +33,9 @@ private:
     PlaneScene* scene;
 
     double* points = nullptr;
+    int* classes = nullptr;
     int point_count = 0;
     int capacity = 0;
 
-    void addPoint(double x, double y);
+    void addPoint(double x, double y, int cls);
 };
