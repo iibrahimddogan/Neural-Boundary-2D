@@ -27,6 +27,8 @@ public:
 
 private slots:
     void onPointClicked(double x, double y);
+    void save_data();
+    void load_data();
 
 private:
     Ui::TrainerClass ui;

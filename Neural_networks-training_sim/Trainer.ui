@@ -90,30 +90,40 @@
      <number>1</number>
     </property>
    </widget>
-   <widget class="QLabel" name="label_info">
+   <widget class="QPushButton" name="SaveButton">
     <property name="geometry">
      <rect>
       <x>930</x>
-      <y>200</y>
+      <y>210</y>
       <width>150</width>
-      <height>400</height>
+      <height>60</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>12</pointsize>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="text">
-     <string notr="true">1  kirmizi
-2  mavi
-3  yesil
-4  turuncu
-5  mor
-6  turkuaz
-7  sari
-8  kahverengi
-9  siyah</string>
+     <string>Save Data</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="LoadButton">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>290</y>
+      <width>150</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Load Data</string>
     </property>
    </widget>
   </widget>
