@@ -360,12 +360,12 @@ void Trainer::train_network()
     }
 
     double* w = new double[inputDim];
-    double b;
+    double* b = new double[1];
 
     for (int d = 0; d < inputDim; d++)
         w[d] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
 
-    b = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
+    b[0] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
 
     int epoch = 0;
     double totalerror = 0.0;
@@ -380,10 +380,12 @@ void Trainer::train_network()
 
         for (int step = 0; step < N; step++)
         {
-            double net = b;
+            double net = 0.0;
 
             for (int d = 0; d < inputDim; d++)
                 net += w[d] * normalized[inputDim * step + d];
+
+            net += b[0];
 
             const double fnet = 2.0 / (1.0 + std::exp(-net)) - 1.0;
             const double fnet_der = 0.5 * (1.0 - fnet * fnet);
@@ -395,7 +397,7 @@ void Trainer::train_network()
             for (int j = 0; j < inputDim; j++)
                 w[j] += delta * normalized[inputDim * step + j];
 
-            b += delta;
+            b[0] += delta;
 
             totalerror += 0.5 * err * err;
         }
@@ -417,10 +419,12 @@ void Trainer::train_network()
                 400.0 - row - 0.5
             };
 
-            double net = b;
+            double net = 0.0;
 
             for (int d = 0; d < inputDim; d++)
                 net += w[d] * ((feature[d] - mean[d]) / sigma[d]);
+
+            net += b[0];
 
             const double fnet = 2.0 / (1.0 + std::exp(-net)) - 1.0;
             const int cls = (fnet > 0.0) ? 0 : 1;
@@ -444,10 +448,11 @@ void Trainer::train_network()
             .arg(epoch)
             .arg(totalerror)
             .arg(weightText)
-            .arg(b, 0, 'f', 4));
+            .arg(b[0], 0, 'f', 4));
 
     delete[] normalized;
     delete[] mean;
     delete[] sigma;
     delete[] w;
+    delete[] b;
 }
