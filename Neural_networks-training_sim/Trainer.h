@@ -37,12 +37,14 @@ private:
     Ui::TrainerClass ui;
     PlaneScene* scene;
 
-    double* points = nullptr;
-    int* classes = nullptr;
+    double* sample = nullptr;
+    int* target = nullptr;
     int point_count = 0;
     int capacity = 0;
+    int inputDim = 0;
 
     QGraphicsPixmapItem* decisionMap = nullptr;
 
-    void addPoint(double x, double y, int cls);
+    bool ensureInputDim();
+    void addPoint(const double* x, int cls);
 };

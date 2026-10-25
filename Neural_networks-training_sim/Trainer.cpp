@@ -63,14 +63,38 @@ Trainer::Trainer(QWidget* parent) : QMainWindow(parent)
 
 Trainer::~Trainer()
 {
-    delete[] points;
-    delete[] classes;
+    delete[] sample;
+    delete[] target;
+}
+
+bool Trainer::ensureInputDim()
+{
+    inputDim = ui.Spinbox_InputDim->value();
+
+    if (inputDim == 0)
+    {
+        statusBar()->showMessage("Set Input Dim first");
+        return false;
+    }
+
+    if (inputDim != 2)
+    {
+        statusBar()->showMessage("This 2D plane requires Input Dim = 2");
+        return false;
+    }
+
+    return true;
 }
 
 void Trainer::onPointClicked(double x, double y)
 {
+    if (!ensureInputDim())
+        return;
+
     int cls = ui.Spinbox_Class->value() - 1;
-    addPoint(x, y, cls);
+
+    double feature[2] = { x, y };
+    addPoint(feature, cls);
 
     QColor c = classColor(cls);
     QGraphicsEllipseItem* dot = scene->addEllipse(x - 4, -y - 4, 8, 8, QPen(c), QBrush(c));
@@ -83,37 +107,41 @@ void Trainer::onPointClicked(double x, double y)
         .arg(point_count));
 }
 
-void Trainer::addPoint(double x, double y, int cls)
+void Trainer::addPoint(const double* x, int cls)
 {
     if (point_count == capacity)
     {
         int new_capacity = (capacity == 0) ? 8 : capacity * 2;
 
-        double* new_points = new double[new_capacity * 2];
-        int* new_classes = new int[new_capacity];
+        double* new_sample = new double[new_capacity * inputDim];
+        int* new_target = new int[new_capacity];
 
-        for (int i = 0; i < point_count * 2; i++)
-            new_points[i] = points[i];
+        for (int i = 0; i < point_count * inputDim; i++)
+            new_sample[i] = sample[i];
 
         for (int i = 0; i < point_count; i++)
-            new_classes[i] = classes[i];
+            new_target[i] = target[i];
 
-        delete[] points;
-        delete[] classes;
+        delete[] sample;
+        delete[] target;
 
-        points = new_points;
-        classes = new_classes;
+        sample = new_sample;
+        target = new_target;
         capacity = new_capacity;
     }
 
-    points[2 * point_count] = x;
-    points[2 * point_count + 1] = y;
-    classes[point_count] = cls;
+    for (int d = 0; d < inputDim; d++)
+        sample[inputDim * point_count + d] = x[d];
+
+    target[point_count] = cls;
     point_count++;
 }
 
 void Trainer::save_data()
 {
+    if (!ensureInputDim())
+        return;
+
     if (point_count == 0)
     {
         statusBar()->showMessage("No points to save");
@@ -134,13 +162,18 @@ void Trainer::save_data()
 
     int class_count = 2;
     for (int i = 0; i < point_count; i++)
-        if (classes[i] + 1 > class_count)
-            class_count = classes[i] + 1;
+        if (target[i] + 1 > class_count)
+            class_count = target[i] + 1;
 
-    file << 2 << " " << 400 << " " << 400 << " " << class_count << "\n";
+    file << inputDim << " " << 400 << " " << 400 << " " << class_count << "\n";
 
     for (int i = 0; i < point_count; i++)
-        file << points[2 * i] << " " << points[2 * i + 1] << " " << classes[i] << "\n";
+    {
+        for (int d = 0; d < inputDim; d++)
+            file << sample[inputDim * i + d] << " ";
+
+        file << target[i] << "\n";
+    }
 
     file.close();
 
@@ -149,6 +182,9 @@ void Trainer::save_data()
 
 void Trainer::load_data()
 {
+    if (!ensureInputDim())
+        return;
+
     QString fileName = QFileDialog::getOpenFileName(this, "Load Data", "Samples.txt", "Text Files (*.txt)");
     if (fileName.isEmpty())
         return;
@@ -163,16 +199,28 @@ void Trainer::load_data()
 
     int dim, w, h, class_count;
 
-    if (!(file >> dim >> w >> h >> class_count) || dim != 2 || w <= 0 || h <= 0 || class_count < 2)
+    if (!(file >> dim >> w >> h >> class_count))
     {
         statusBar()->showMessage("Invalid file format");
         return;
     }
 
-    delete[] points;
-    delete[] classes;
-    points = nullptr;
-    classes = nullptr;
+    if (dim != inputDim)
+    {
+        statusBar()->showMessage("File Input Dim does not match");
+        return;
+    }
+
+    if (w <= 0 || h <= 0 || class_count < 2)
+    {
+        statusBar()->showMessage("Invalid file format");
+        return;
+    }
+
+    delete[] sample;
+    delete[] target;
+    sample = nullptr;
+    target = nullptr;
     point_count = 0;
     capacity = 0;
 
@@ -183,21 +231,39 @@ void Trainer::load_data()
     decisionMap = nullptr;
     connect(scene, &PlaneScene::pointClicked, this, &Trainer::onPointClicked);
 
-    double x, y;
+    double* row = new double[inputDim];
     int label;
 
-    while (file >> x >> y >> label)
+    while (true)
     {
+        bool ok = true;
+
+        for (int d = 0; d < inputDim; d++)
+        {
+            if (!(file >> row[d]))
+            {
+                ok = false;
+                break;
+            }
+        }
+
+        if (!ok)
+            break;
+
+        if (!(file >> label))
+            break;
+
         if (label < 0 || label >= class_count || label > 8)
             continue;
 
-        addPoint(x, y, label);
+        addPoint(row, label);
 
         QColor c = classColor(label);
-        QGraphicsEllipseItem* dot = scene->addEllipse(x - 4, -y - 4, 8, 8, QPen(c), QBrush(c));
+        QGraphicsEllipseItem* dot = scene->addEllipse(row[0] - 4, -row[1] - 4, 8, 8, QPen(c), QBrush(c));
         dot->setZValue(1);
     }
 
+    delete[] row;
     file.close();
 
     statusBar()->showMessage(QString("Loaded %1 points: %2").arg(point_count).arg(fileName));
@@ -205,6 +271,9 @@ void Trainer::load_data()
 
 void Trainer::train_network()
 {
+    if (!ensureInputDim())
+        return;
+
     const int N = point_count;
 
     if (N < 2)
@@ -218,9 +287,9 @@ void Trainer::train_network()
 
     for (int i = 0; i < N; i++)
     {
-        if (classes[i] == 0)
+        if (target[i] == 0)
             class0Count++;
-        else if (classes[i] == 1)
+        else if (target[i] == 1)
             class1Count++;
         else
         {
@@ -243,50 +312,60 @@ void Trainer::train_network()
     }
 
     // Z-score parameters: mean and standard deviation of the training set.
-    double mean[2] = { 0.0, 0.0 };
-    double sigma[2] = { 0.0, 0.0 };
+    double* mean = new double[inputDim];
+    double* sigma = new double[inputDim];
+
+    for (int d = 0; d < inputDim; d++)
+    {
+        mean[d] = 0.0;
+        sigma[d] = 0.0;
+    }
 
     for (int i = 0; i < N; i++)
     {
-        mean[0] += points[2 * i];
-        mean[1] += points[2 * i + 1];
+        for (int d = 0; d < inputDim; d++)
+            mean[d] += sample[inputDim * i + d];
     }
 
-    mean[0] /= N;
-    mean[1] /= N;
+    for (int d = 0; d < inputDim; d++)
+        mean[d] /= N;
 
     for (int i = 0; i < N; i++)
     {
-        const double dx = points[2 * i] - mean[0];
-        const double dy = points[2 * i + 1] - mean[1];
-
-        sigma[0] += dx * dx;
-        sigma[1] += dy * dy;
+        for (int d = 0; d < inputDim; d++)
+        {
+            const double diff = sample[inputDim * i + d] - mean[d];
+            sigma[d] += diff * diff;
+        }
     }
 
-    sigma[0] = std::sqrt(sigma[0] / N);
-    sigma[1] = std::sqrt(sigma[1] / N);
+    for (int d = 0; d < inputDim; d++)
+    {
+        sigma[d] = std::sqrt(sigma[d] / N);
 
-    if (sigma[0] < 1e-8)
-        sigma[0] = 1.0;
-    if (sigma[1] < 1e-8)
-        sigma[1] = 1.0;
+        if (sigma[d] < 1e-8)
+            sigma[d] = 1.0;
+    }
 
-    // Normalized copy of the samples (sample[2*i], sample[2*i+1]).
-    double* sample = new double[N * 2];
+    // Normalized copy of the samples.
+    double* normalized = new double[N * inputDim];
 
     for (int i = 0; i < N; i++)
     {
-        sample[2 * i] = (points[2 * i] - mean[0]) / sigma[0];
-        sample[2 * i + 1] = (points[2 * i + 1] - mean[1]) / sigma[1];
+        for (int d = 0; d < inputDim; d++)
+        {
+            normalized[inputDim * i + d] =
+                (sample[inputDim * i + d] - mean[d]) / sigma[d];
+        }
     }
 
-    // Single neuron: two weights and one bias.
-    double w[2];
+    // Single neuron: inputDim weights and one bias.
+    double* w = new double[inputDim];
     double b;
 
-    w[0] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
-    w[1] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
+    for (int d = 0; d < inputDim; d++)
+        w[d] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
+
     b = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
 
     int epoch = 0;
@@ -302,19 +381,21 @@ void Trainer::train_network()
 
         for (int step = 0; step < N; step++)
         {
-            const double net = w[0] * sample[2 * step]
-                             + w[1] * sample[2 * step + 1]
-                             + b;
+            double net = b;
+
+            for (int d = 0; d < inputDim; d++)
+                net += w[d] * normalized[inputDim * step + d];
 
             const double fnet = 2.0 / (1.0 + std::exp(-net)) - 1.0;
             const double fnet_der = 0.5 * (1.0 - fnet * fnet);
 
-            const double d = (classes[step] == 0) ? 1.0 : -1.0;
+            const double d = (target[step] == 0) ? 1.0 : -1.0;
             const double err = d - fnet;
             const double delta = LearningRate * err * fnet_der;
 
-            w[0] += delta * sample[2 * step];
-            w[1] += delta * sample[2 * step + 1];
+            for (int j = 0; j < inputDim; j++)
+                w[j] += delta * normalized[inputDim * step + j];
+
             b += delta;
 
             totalerror += 0.5 * err * err;
@@ -332,15 +413,17 @@ void Trainer::train_network()
         for (int col = 0; col < 800; col++)
         {
             // Pixel centre -> model coordinates (clicked y is -scene y).
-            const double x = -400.0 + col + 0.5;
-            const double y = 400.0 - row - 0.5;
+            const double feature[2] = {
+                -400.0 + col + 0.5,
+                400.0 - row - 0.5
+            };
 
-            const double xn = (x - mean[0]) / sigma[0];
-            const double yn = (y - mean[1]) / sigma[1];
+            double net = b;
 
-            const double net = w[0] * xn + w[1] * yn + b;
+            for (int d = 0; d < inputDim; d++)
+                net += w[d] * ((feature[d] - mean[d]) / sigma[d]);
+
             const double fnet = 2.0 / (1.0 + std::exp(-net)) - 1.0;
-
             const int cls = (fnet > 0.0) ? 0 : 1;
 
             image.setPixel(col, row,
@@ -353,13 +436,19 @@ void Trainer::train_network()
     decisionMap->setPos(-400, -400);
     decisionMap->setZValue(-1);
 
-    delete[] sample;
+    QString weightText;
+    for (int d = 0; d < inputDim; d++)
+        weightText += QString("%1 ").arg(w[d], 0, 'f', 4);
 
     statusBar()->showMessage(
-        QString("epoch=%1  totalerror=%2  w=(%3, %4)  b=%5")
+        QString("epoch=%1  totalerror=%2  w=(%3)  b=%4")
             .arg(epoch)
             .arg(totalerror)
-            .arg(w[0], 0, 'f', 4)
-            .arg(w[1], 0, 'f', 4)
+            .arg(weightText)
             .arg(b, 0, 'f', 4));
+
+    delete[] normalized;
+    delete[] mean;
+    delete[] sigma;
+    delete[] w;
 }
