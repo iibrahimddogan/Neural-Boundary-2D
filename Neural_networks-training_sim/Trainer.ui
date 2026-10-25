@@ -189,6 +189,150 @@
      <string>Train</string>
     </property>
    </widget>
+   <widget class="QLabel" name="label_LearningRate">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>540</y>
+      <width>150</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Learning Rate</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="Spinbox_LearningRate">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>570</y>
+      <width>150</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="decimals">
+     <number>4</number>
+    </property>
+    <property name="minimum">
+     <double>0.0001</double>
+    </property>
+    <property name="maximum">
+     <double>10.0000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.0100</double>
+    </property>
+    <property name="value">
+     <double>0.1000</double>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MinError">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>640</y>
+      <width>150</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Min Error</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="Spinbox_MinError">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>670</y>
+      <width>150</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Per-sample error threshold</string>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+    <property name="minimum">
+     <double>0.000000</double>
+    </property>
+    <property name="maximum">
+     <double>10.000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.001000</double>
+    </property>
+    <property name="value">
+     <double>0.001000</double>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_MaxEpoch">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>740</y>
+      <width>150</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Max Epoch</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="Spinbox_MaxEpoch">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>770</y>
+      <width>150</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="minimum">
+     <number>1</number>
+    </property>
+    <property name="maximum">
+     <number>1000000</number>
+    </property>
+    <property name="singleStep">
+     <number>1000</number>
+    </property>
+    <property name="value">
+     <number>20000</number>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
  </widget>

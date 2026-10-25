@@ -371,9 +371,9 @@ void Trainer::train_network()
     int epoch = 0;
     double totalerror = 0.0;
 
-    const double LearningRate = 0.1;
-    const double min_error = 0.001 * N;
-    const int max_epoch = 20000;
+    const double LearningRate = ui.Spinbox_LearningRate->value();
+    const double min_error = ui.Spinbox_MinError->value() * N;
+    const int max_epoch = ui.Spinbox_MaxEpoch->value();
 
     do
     {
