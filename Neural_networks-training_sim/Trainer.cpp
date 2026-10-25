@@ -390,7 +390,14 @@ void Trainer::train_network()
             const double fnet = 2.0 / (1.0 + std::exp(-net)) - 1.0;
             const double fnet_der = 0.5 * (1.0 - fnet * fnet);
 
-            const double d = (target[step] == 0) ? 1.0 : -1.0;
+            double d;
+            if (target[step] == 0)
+            {
+                d = 1.0;
+            }
+            else d = -1.0;
+
+ 
             const double err = d - fnet;
             const double delta = LearningRate * err * fnet_der;
 
