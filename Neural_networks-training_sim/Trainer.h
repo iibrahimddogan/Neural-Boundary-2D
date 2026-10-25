@@ -39,7 +39,7 @@ private:
 
     double* sample = nullptr;
     int* target = nullptr;
-    int point_count = 0;
+    int numSample = 0;
     int capacity = 0;
     int inputDim = 0;
 

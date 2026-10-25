@@ -104,22 +104,22 @@ void Trainer::onPointClicked(double x, double y)
         .arg(x, 0, 'f', 1)
         .arg(y, 0, 'f', 1)
         .arg(cls + 1)
-        .arg(point_count));
+        .arg(numSample));
 }
 
 void Trainer::addPoint(const double* x, int cls)
 {
-    if (point_count == capacity)
+    if (numSample == capacity)
     {
         int new_capacity = (capacity == 0) ? 8 : capacity * 2;
 
         double* new_sample = new double[new_capacity * inputDim];
         int* new_target = new int[new_capacity];
 
-        for (int i = 0; i < point_count * inputDim; i++)
+        for (int i = 0; i < numSample * inputDim; i++)
             new_sample[i] = sample[i];
 
-        for (int i = 0; i < point_count; i++)
+        for (int i = 0; i < numSample; i++)
             new_target[i] = target[i];
 
         delete[] sample;
@@ -131,10 +131,10 @@ void Trainer::addPoint(const double* x, int cls)
     }
 
     for (int d = 0; d < inputDim; d++)
-        sample[inputDim * point_count + d] = x[d];
+        sample[inputDim * numSample + d] = x[d];
 
-    target[point_count] = cls;
-    point_count++;
+    target[numSample] = cls;
+    numSample++;
 }
 
 void Trainer::save_data()
@@ -142,7 +142,7 @@ void Trainer::save_data()
     if (!ensureInputDim())
         return;
 
-    if (point_count == 0)
+    if (numSample == 0)
     {
         statusBar()->showMessage("No points to save");
         return;
@@ -161,13 +161,13 @@ void Trainer::save_data()
     }
 
     int class_count = 2;
-    for (int i = 0; i < point_count; i++)
+    for (int i = 0; i < numSample; i++)
         if (target[i] + 1 > class_count)
             class_count = target[i] + 1;
 
     file << inputDim << " " << 400 << " " << 400 << " " << class_count << "\n";
 
-    for (int i = 0; i < point_count; i++)
+    for (int i = 0; i < numSample; i++)
     {
         for (int d = 0; d < inputDim; d++)
             file << sample[inputDim * i + d] << " ";
@@ -177,7 +177,7 @@ void Trainer::save_data()
 
     file.close();
 
-    statusBar()->showMessage(QString("Saved %1 points: %2").arg(point_count).arg(fileName));
+    statusBar()->showMessage(QString("Saved %1 points: %2").arg(numSample).arg(fileName));
 }
 
 void Trainer::load_data()
@@ -221,7 +221,7 @@ void Trainer::load_data()
     delete[] target;
     sample = nullptr;
     target = nullptr;
-    point_count = 0;
+    numSample = 0;
     capacity = 0;
 
     PlaneScene* oldScene = scene;
@@ -266,7 +266,7 @@ void Trainer::load_data()
     delete[] row;
     file.close();
 
-    statusBar()->showMessage(QString("Loaded %1 points: %2").arg(point_count).arg(fileName));
+    statusBar()->showMessage(QString("Loaded %1 points: %2").arg(numSample).arg(fileName));
 }
 
 void Trainer::train_network()
@@ -274,7 +274,7 @@ void Trainer::train_network()
     if (!ensureInputDim())
         return;
 
-    const int N = point_count;
+    const int N = numSample;
 
     if (N < 2)
     {
@@ -311,7 +311,7 @@ void Trainer::train_network()
         decisionMap = nullptr;
     }
 
-    // Z-score parameters: mean and standard deviation of the training set.
+    // mean-variance
     double* mean = new double[inputDim];
     double* sigma = new double[inputDim];
 
@@ -347,7 +347,7 @@ void Trainer::train_network()
             sigma[d] = 1.0;
     }
 
-    // Normalized copy of the samples.
+    
     double* normalized = new double[N * inputDim];
 
     for (int i = 0; i < N; i++)
@@ -359,7 +359,6 @@ void Trainer::train_network()
         }
     }
 
-    // Single neuron: inputDim weights and one bias.
     double* w = new double[inputDim];
     double b;
 
@@ -405,14 +404,14 @@ void Trainer::train_network()
 
     } while (totalerror > min_error && epoch < max_epoch);
 
-    // Classify every pixel with the trained model and paint the plane.
+   
     QImage image(800, 800, QImage::Format_RGB32);
 
     for (int row = 0; row < 800; row++)
     {
         for (int col = 0; col < 800; col++)
         {
-            // Pixel centre -> model coordinates (clicked y is -scene y).
+           
             const double feature[2] = {
                 -400.0 + col + 0.5,
                 400.0 - row - 0.5
