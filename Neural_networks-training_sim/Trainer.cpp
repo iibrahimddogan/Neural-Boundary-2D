@@ -13,15 +13,17 @@
 #include <cstdlib>
 #include <fstream>
 
-static const QColor renkler[] = {
-    Qt::red, Qt::blue, Qt::darkGreen, QColor(255, 140, 0), Qt::darkMagenta,
-    QColor(0, 160, 160), Qt::darkYellow, QColor(150, 75, 0), Qt::black
+static const QColor Colors[9] = {
+    QColor(228,  26,  28),   // 1 - kirmizi
+    QColor( 55, 126, 184),   // 2 - mavi
+    QColor( 77, 175,  74),   // 3 - yesil
+    QColor(152,  78, 163),   // 4 - mor
+    QColor(255, 127,   0),   // 5 - turuncu
+    QColor(166,  86,  40),   // 6 - kahverengi
+    QColor(247, 129, 191),   // 7 - pembe
+    QColor(  0, 160, 160),   // 8 - turkuaz
+    QColor( 80,  80,  80)    // 9 - koyu gri
 };
-
-static QColor classColor(int cls)
-{
-    return renkler[cls % 9];
-}
 
 PlaneScene::PlaneScene(QObject* parent) : QGraphicsScene(parent)
 {
@@ -77,9 +79,9 @@ bool Trainer::ensureInputDim()
         return false;
     }
 
-    if (inputDim != 2)
+    if (inputDim > 8)
     {
-        statusBar()->showMessage("This 2D plane requires Input Dim = 2");
+        statusBar()->showMessage("Input Dim must be at most 8");
         return false;
     }
 
@@ -93,10 +95,21 @@ void Trainer::onPointClicked(double x, double y)
 
     int cls = ui.Spinbox_Class->value() - 1;
 
-    double feature[2] = { x, y };
+    if (cls < 0 || cls >= 9)
+    {
+        statusBar()->showMessage("Class must be between 1 and 9");
+        return;
+    }
+
+    double feature[8] = {0};
+    feature[0] = x;
+
+    if (inputDim >= 2)
+        feature[1] = y;
+
     addPoint(feature, cls);
 
-    QColor c = classColor(cls);
+    QColor c = Colors[cls];
     QGraphicsEllipseItem* dot = scene->addEllipse(x - 4, -y - 4, 8, 8, QPen(c), QBrush(c));
     dot->setZValue(1);
 
@@ -231,7 +244,7 @@ void Trainer::load_data()
     decisionMap = nullptr;
     connect(scene, &PlaneScene::pointClicked, this, &Trainer::onPointClicked);
 
-    double* row = new double[inputDim];
+    double row[8] = {0};
     int label;
 
     while (true)
@@ -258,12 +271,14 @@ void Trainer::load_data()
 
         addPoint(row, label);
 
-        QColor c = classColor(label);
-        QGraphicsEllipseItem* dot = scene->addEllipse(row[0] - 4, -row[1] - 4, 8, 8, QPen(c), QBrush(c));
+        const double drawX = row[0];
+        const double drawY = (inputDim >= 2) ? row[1] : 0.0;
+
+        QColor c = Colors[label];
+        QGraphicsEllipseItem* dot = scene->addEllipse(drawX - 4, -drawY - 4, 8, 8, QPen(c), QBrush(c));
         dot->setZValue(1);
     }
 
-    delete[] row;
     file.close();
 
     statusBar()->showMessage(QString("Loaded %1 points: %2").arg(numSample).arg(fileName));
@@ -421,10 +436,14 @@ void Trainer::train_network()
         for (int col = 0; col < 800; col++)
         {
            
-            const double feature[2] = {
-                -400.0 + col + 0.5,
-                400.0 - row - 0.5
-            };
+            double feature[8] = {0};
+            feature[0] = -400.0 + col + 0.5;
+
+            if (inputDim >= 2)
+                feature[1] = 400.0 - row - 0.5;
+
+            for (int d = 2; d < inputDim; d++)
+                feature[d] = mean[d];
 
             double net = 0.0;
 
@@ -436,9 +455,7 @@ void Trainer::train_network()
             const double fnet = 2.0 / (1.0 + std::exp(-net)) - 1.0;
             const int cls = (fnet > 0.0) ? 0 : 1;
 
-            image.setPixel(col, row,
-                (cls == 0) ? qRgb(255, 205, 205)
-                           : qRgb(205, 220, 255));
+            image.setPixel(col, row, Colors[cls].lighter(160).rgb());
         }
     }
 
