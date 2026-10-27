@@ -32,6 +32,7 @@ private slots:
     void save_data();
     void load_data();
     void train_network();
+    void train_multiclass();
 
 private:
     Ui::TrainerClass ui;
